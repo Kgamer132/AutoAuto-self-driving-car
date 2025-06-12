@@ -1,0 +1,71 @@
+import car
+import numpy as np
+from car import lidar
+
+i = 0
+j = 0
+SAFE_DISTANCE = 20  # Distance in centimeters to consider an obstacle as unsafe
+PEDESTRIAN_THRESHOLD = 0.05  # Minimum size to consider a detected object a pedestrian
+
+def safe():
+    car.forward(0.5)
+
+while True:
+    frame = car.capture()  # Capture the current camera frame
+
+    # Detect pedestrians
+    pedestrians = car.detect_pedestrians(frame)
+    pedestrian_size = car.object_size(pedestrians, frame.shape)
+    print(f"Pedestrian Size: {pedestrian_size}")
+
+    # Check for stop signs
+    stop = car.detect_stop_signs(frame)
+    
+    # Check for faces
+    face = car.detect_faces(frame)
+
+    # Use Lidar to detect obstacles
+    distances = []  # List to store Lidar distances
+
+    # Sweep the Lidar sensor from 0 to 360 degrees
+    for t in range(0, 360):
+        r = lidar.sweep(
+            theta_1=t,
+            phi_1=87,
+            theta_2=t,
+            phi_2=0
+        )
+        distances.append(r)  # Append the returned distance reading
+    #print(f"Lidar Distances: {distances}")
+    obstacle_detected = False;
+    
+    while i < len(distances):
+        while j < len(distances[i]):
+            if distances[i][j] is not None:
+                if distances[i][j] <= SAFE_DISTANCE:
+                    obstacle_detected = True
+            j = j + 1
+        i = i + 1
+    # Check for obstacles using Lidar distance data
+    """for i in range(len(distances)):
+        for i in range(distances[i]):
+            print("Object found")
+    """
+        
+    # Decision-making logic
+    if obstacle_detected == True:
+        car.forward(0)  # Stop the car if an obstacle is too close
+        print("Obstacle detected, stopping.")
+        car.reverse(0.5)  # Reverse for half a second
+        car.left(1)       # Turn left for 1 second
+    elif pedestrians and pedestrian_size >= PEDESTRIAN_THRESHOLD:
+        car.forward(0)  # Stop for pedestrians
+        print("Stopping due to pedestrian detected.")
+    elif stop:
+        car.forward(0)  # Stop at stop signs
+        car.pause(2)     # Pause for the stop sign
+        print("Stopping for stop sign.")
+    elif face:
+        print("Hello kind human!")
+    else:
+        safe()  # Move forward safely if no obstacles or pedestrians are detected
