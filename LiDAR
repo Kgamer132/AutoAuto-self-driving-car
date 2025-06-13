@@ -5,7 +5,7 @@ from car import lidar
 i = 0
 j = 0
 SAFE_DISTANCE = 20  # Distance in centimeters to consider an obstacle as unsafe
-PEDESTRIAN_THRESHOLD = 0.05  # Minimum size to consider a detected object a pedestrian
+PEDESTRIAN_THRESHOLD = 0.2  # Minimum size to consider a detected object a pedestrian
 
 def safe():
     car.forward(0.5)
